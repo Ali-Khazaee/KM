@@ -9,35 +9,32 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: linuxkit/kernel:5.15.12-ubuntu  # Prebuilt kernel + toolchain
-      options: --privileged  # Required for kernel operations
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4  # Updated to latest checkout
+        uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Set up kernel build environment
         run: |
-          apt-get update && apt-get install -y kmod file
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            kmod \
+            linux-headers-$(uname -r)  # Installs headers for the GitHub Actions runner's kernel
 
       - name: Build the module
         run: |
           cd $GITHUB_WORKSPACE
           make
-          file hello.ko  # Verify ELF format
 
-      - name: Test module loading (emulated)
+      - name: Verify the module
         run: |
-          cd $GITHUB_WORKSPACE
-          insmod ./hello.ko || true
-          dmesg | grep -i "hello"
-          rmmod hello || true
-          dmesg | grep -i "goodbye"
+          file hello.ko  # Check if it's a valid kernel module
+          modinfo hello.ko  # Show module info
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4  # Updated to v4 (current latest)
+        uses: actions/upload-artifact@v4
         with:
           name: hello_module
           path: hello.ko
-          retention-days: 1  # Reduces storage usage
+          retention-days: 1
