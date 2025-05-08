@@ -1,6 +1,6 @@
 obj-m := hello.o
 
-KERNELDIR ?= /kernel-dev/linux  # Path inside the linuxkit/kernel container
+KERNELDIR ?= /usr/src/linux-headers-5.15.0-76-generic  # Example
 PWD := $(shell pwd)
 
 all:
