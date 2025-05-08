@@ -1,0 +1,44 @@
+name: Build Linux Kernel Module
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: linuxkit/kernel:5.15.12-ubuntu  # Prebuilt kernel + toolchain
+      options: --privileged  # Needed for kernel builds
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build the kernel module
+        run: |
+          # Install basic tools
+          apt-get update && apt-get install -y kmod
+
+          # Navigate to module directory
+          cd $GITHUB_WORKSPACE
+
+          # Build the module (KERNELDIR is set automatically in the container)
+          make
+
+          # Verify the module was built
+          ls -lh hello.ko
+
+          # (Optional) Test loading the module (emulated)
+          insmod ./hello.ko || true
+          dmesg | grep "Hello"
+          rmmod hello || true
+          dmesg | grep "Goodbye"
+
+      - name: Upload artifact (hello.ko)
+        uses: actions/upload-artifact@v3
+        with:
+          name: hello_kernel_module
+          path: hello.ko
